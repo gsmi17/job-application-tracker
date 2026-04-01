@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Job Tracker{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Dashboard</h1>
+    <div class="page-subtitle">{{ now.strftime('%A, %B %d %Y') if now else 'Overview' }}</div>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="card-label">Applications</div>
+    <div class="card-value">{{ stats.total_applications }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="card-label">Companies</div>
+    <div class="card-value">{{ stats.total_companies }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="card-label">Jobs Tracked</div>
+    <div class="card-value">{{ stats.total_jobs }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="card-label">Contacts</div>
+    <div class="card-value">{{ stats.total_contacts }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="card-label">Interviews</div>
+    <div class="card-value text-accent">{{ stats.interviews }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="card-label">Offers</div>
+    <div class="card-value" style="color: var(--accent)">{{ stats.offers }}</div>
+  </div>
+</div>
+
+<div class="dashboard-grid">
+  <div class="card">
+    <div class="section-title">Application Status</div>
+    {% if status_counts %}
+      {% set total = stats.total_applications or 1 %}
+      {% for row in status_counts %}
+        <div class="status-bar-item">
+          <div class="status-bar-label">
+            <span>{{ row.status }}</span>
+            <span>{{ row.count }}</span>
+          </div>
+          <div class="status-bar-track">
+            <div class="status-bar-fill" style="width: {{ (row.count / total * 100)|round }}%"></div>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon">◈</div>
+        No applications yet
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="section-title">Recent Activity</div>
+    {% if recent %}
+      <ul class="activity-list">
+        {% for app in recent %}
+          <li class="activity-item">
+            <div>
+              <div class="activity-title">{{ app.job_title or 'Unknown Role' }}</div>
+              <div class="activity-sub">{{ app.company_name or '—' }} · {{ app.application_date }}</div>
+            </div>
+            <span class="badge badge--{{ app.status.lower() }}">{{ app.status }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon">◯</div>
+        No recent applications
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+
+{% endblock %}

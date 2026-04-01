@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Job Match — Job Tracker{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Job Match</h1>
+    <div class="page-subtitle">Find jobs matching your skills</div>
+  </div>
+</div>
+
+<div class="match-input-card">
+  <form method="POST">
+    <div class="match-input-row">
+      <div class="form-group">
+        <label class="form-label">Your Skills</label>
+        <input class="form-input" type="text" name="skills"
+               value="{{ user_skills }}"
+               placeholder="Python, SQL, Flask, React — comma separated"
+               style="font-family: var(--font-mono); font-size: 0.85rem;" />
+        <span class="form-hint">Enter skills separated by commas</span>
+      </div>
+      <button type="submit" class="btn btn--primary" style="margin-bottom: 20px;">✦ Find Matches</button>
+    </div>
+  </form>
+</div>
+
+{% if user_skills %}
+  {% if results %}
+    <div style="margin-bottom: 16px; font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted);">
+      {{ results|length }} job{{ 's' if results|length != 1 }} found — ranked by match %
+    </div>
+    {% for job in results %}
+      <div class="match-card">
+        <div class="match-header">
+          <div>
+            <div class="match-title">{{ job.job_title }}</div>
+            <div style="color: var(--text-muted); font-size: 0.83rem; margin-top: 3px; font-family: var(--font-mono);">
+              {{ job.company_name or 'Unknown Company' }}
+              {% if job.job_type %} · {{ job.job_type }}{% endif %}
+              {% if job.salary_min or job.salary_max %}
+                · ${{ '{:,.0f}'.format(job.salary_min) if job.salary_min else '?' }}–${{ '{:,.0f}'.format(job.salary_max) if job.salary_max else '?' }}
+              {% endif %}
+            </div>
+          </div>
+          <div class="match-pct {% if job.match_pct >= 75 %}match-pct--high{% elif job.match_pct >= 40 %}match-pct--mid{% else %}match-pct--low{% endif %}">
+            {{ job.match_pct }}%
+          </div>
+        </div>
+
+        <div class="match-bar">
+          <div class="match-bar-fill" style="width: {{ job.match_pct }}%; {% if job.match_pct >= 75 %}background: var(--accent){% elif job.match_pct >= 40 %}background: #ffc832{% else %}background: var(--accent3){% endif %}"></div>
+        </div>
+
+        <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px;">
+          {{ job.matched|length }}/{{ job.total_reqs }} skills matched
+        </div>
+
+        <div class="match-skills">
+          {% for s in job.matched %}
+            <span class="skill-tag skill-tag--matched">✓ {{ s }}</span>
+          {% endfor %}
+          {% for s in job.missing %}
+            <span class="skill-tag skill-tag--missing">✗ {{ s }}</span>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="card">
+      <div class="empty-state">
+        <div class="empty-state-icon">◻</div>
+        No jobs with skill requirements found.<br>
+        <span style="font-size: 0.82rem; margin-top: 8px; display:block">
+          <a href="{{ url_for('job_new') }}" class="text-accent">Add jobs with required skills →</a>
+        </span>
+      </div>
+    </div>
+  {% endif %}
+{% endif %}
+
+{% endblock %}

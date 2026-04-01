@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block title %}Jobs — Job Tracker{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Jobs</h1>
+    <div class="page-subtitle">{{ jobs|length }} total</div>
+  </div>
+  <button class="btn btn--primary" onclick="toggleForm('add-form')">+ Add Job</button>
+</div>
+
+<div id="add-form" class="form-wrap mb-2" style="display:none">
+  <div class="section-title">New Job</div>
+  <form method="POST" action="{{ url_for('job_new') }}">
+    <div class="form-grid">
+      <div class="form-group form-group--full">
+        <label class="form-label">Job Title *</label>
+        <input class="form-input" type="text" name="job_title" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Company</label>
+        <select class="form-select" name="company_id">
+          <option value="">— Select —</option>
+          {% for c in companies %}
+          <option value="{{ c.company_id }}">{{ c.company_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Job Type</label>
+        <select class="form-select" name="job_type">
+          <option value="">— Select —</option>
+          {% for t in ['Full-time','Part-time','Contract','Internship'] %}
+          <option value="{{ t }}">{{ t }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Salary Min ($)</label>
+        <input class="form-input" type="number" name="salary_min" placeholder="e.g. 80000" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Salary Max ($)</label>
+        <input class="form-input" type="number" name="salary_max" placeholder="e.g. 120000" />
+      </div>
+      <div class="form-group form-group--full">
+        <label class="form-label">Job URL</label>
+        <input class="form-input" type="url" name="job_url" placeholder="https://..." />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date Posted</label>
+        <input class="form-input" type="date" name="date_posted" />
+      </div>
+      <div class="form-group form-group--full">
+        <label class="form-label">Required Skills</label>
+        <input class="form-input" type="text" name="requirements" placeholder="Python, SQL, Flask — comma separated" />
+        <span class="form-hint">Separate skills with commas. Used for Job Match.</span>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn--primary">Add Job</button>
+      <button type="button" class="btn btn--ghost" onclick="toggleForm('add-form')">Cancel</button>
+    </div>
+  </form>
+</div>
+
+{% if edit_job %}
+<div class="form-wrap mb-2">
+  <div class="section-title">Edit Job</div>
+  <form method="POST" action="{{ url_for('job_edit', id=edit_job.job_id) }}">
+    <div class="form-grid">
+      <div class="form-group form-group--full">
+        <label class="form-label">Job Title *</label>
+        <input class="form-input" type="text" name="job_title" value="{{ edit_job.job_title }}" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Company</label>
+        <select class="form-select" name="company_id">
+          <option value="">— Select —</option>
+          {% for c in companies %}
+          <option value="{{ c.company_id }}" {{ 'selected' if edit_job.company_id == c.company_id }}>{{ c.company_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Job Type</label>
+        <select class="form-select" name="job_type">
+          <option value="">— Select —</option>
+          {% for t in ['Full-time','Part-time','Contract','Internship'] %}
+          <option value="{{ t }}" {{ 'selected' if edit_job.job_type == t }}>{{ t }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Salary Min ($)</label>
+        <input class="form-input" type="number" name="salary_min" value="{{ edit_job.salary_min or '' }}" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Salary Max ($)</label>
+        <input class="form-input" type="number" name="salary_max" value="{{ edit_job.salary_max or '' }}" />
+      </div>
+      <div class="form-group form-group--full">
+        <label class="form-label">Job URL</label>
+        <input class="form-input" type="url" name="job_url" value="{{ edit_job.job_url or '' }}" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date Posted</label>
+        <input class="form-input" type="date" name="date_posted" value="{{ edit_job.date_posted or '' }}" />
+      </div>
+      <div class="form-group form-group--full">
+        <label class="form-label">Required Skills</label>
+        <input class="form-input" type="text" name="requirements" value="{{ edit_job.requirements_str or '' }}" />
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn--primary">Update Job</button>
+      <a href="{{ url_for('jobs') }}" class="btn btn--ghost">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endif %}
+
+{% if jobs %}
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Job Title</th><th>Company</th><th>Type</th>
+        <th>Salary</th><th>Skills</th><th>Apps</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for j in jobs %}
+      <tr>
+        <td>
+          {{ j.job_title }}
+          {% if j.job_url %}<br><a href="{{ j.job_url }}" target="_blank" style="font-size:0.75rem;color:var(--accent2);font-family:var(--font-mono)">↗ posting</a>{% endif %}
+        </td>
+        <td>{{ j.company_name or '—' }}</td>
+        <td>
+          {% if j.job_type %}
+          <span class="badge badge--{{ j.job_type.lower().replace('-','') }}">{{ j.job_type }}</span>
+          {% else %}—{% endif %}
+        </td>
+        <td class="mono" style="font-size:0.8rem">
+          {% if j.salary_min or j.salary_max %}
+            ${{ '{:,.0f}'.format(j.salary_min) if j.salary_min else '?' }}–${{ '{:,.0f}'.format(j.salary_max) if j.salary_max else '?' }}
+          {% else %}—{% endif %}
+        </td>
+        <td>
+          {% if j.requirements and j.requirements is iterable and j.requirements is not string %}
+            <div style="display:flex;flex-wrap:wrap;gap:4px">
+              {% for skill in j.requirements %}
+                {% if loop.index <= 3 %}
+                <span class="skill-tag skill-tag--matched">{{ skill }}</span>
+                {% endif %}
+              {% endfor %}
+              {% if j.requirements|list|length > 3 %}
+              <span class="skill-tag skill-tag--missing">+{{ j.requirements|list|length - 3 }}</span>
+              {% endif %}
+            </div>
+          {% else %}—{% endif %}
+        </td>
+        <td><span class="badge badge--applied">{{ j.app_count }}</span></td>
+        <td>
+          <div class="td-actions">
+            <a href="{{ url_for('job_edit', id=j.job_id) }}" class="btn btn--ghost btn--sm">Edit</a>
+            <form method="POST" action="{{ url_for('job_delete', id=j.job_id) }}"
+                  onsubmit="return confirm('Delete this job?')">
+              <button type="submit" class="btn btn--danger btn--sm">Delete</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="table-wrap">
+  <div class="empty-state">
+    <div class="empty-state-icon">◻</div>
+    No jobs yet. Click <strong>+ Add Job</strong> to get started.
+  </div>
+</div>
+{% endif %}
+
+<script>
+function toggleForm(id) {
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Companies — Job Tracker{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Companies</h1>
+    <div class="page-subtitle">{{ companies|length }} total</div>
+  </div>
+  <button class="btn btn--primary" onclick="toggleForm('add-form')">+ Add Company</button>
+</div>
+
+{# ── Add Form ─────────────────────────────────────────────── #}
+<div id="add-form" class="form-wrap mb-2" style="display:none">
+  <div class="section-title">New Company</div>
+  <form method="POST" action="{{ url_for('company_new') }}">
+    <div class="form-grid">
+      <div class="form-group form-group--full">
+        <label class="form-label">Company Name *</label>
+        <input class="form-input" type="text" name="company_name" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Industry</label>
+        <input class="form-input" type="text" name="industry" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Website</label>
+        <input class="form-input" type="url" name="website" placeholder="https://" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">City</label>
+        <input class="form-input" type="text" name="city" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">State</label>
+        <input class="form-input" type="text" name="state" maxlength="2" />
+      </div>
+      <div class="form-group form-group--full">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" name="notes"></textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn--primary">Add Company</button>
+      <button type="button" class="btn btn--ghost" onclick="toggleForm('add-form')">Cancel</button>
+    </div>
+  </form>
+</div>
+
+{# ── Edit Form (shown when edit_company is passed) ─────────── #}
+{% if edit_company %}
+<div class="form-wrap mb-2">
+  <div class="section-title">Edit Company</div>
+  <form method="POST" action="{{ url_for('company_edit', id=edit_company.company_id) }}">
+    <div class="form-grid">
+      <div class="form-group form-group--full">
+        <label class="form-label">Company Name *</label>
+        <input class="form-input" type="text" name="company_name" value="{{ edit_company.company_name }}" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Industry</label>
+        <input class="form-input" type="text" name="industry" value="{{ edit_company.industry or '' }}" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Website</label>
+        <input class="form-input" type="url" name="website" value="{{ edit_company.website or '' }}" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">City</label>
+        <input class="form-input" type="text" name="city" value="{{ edit_company.city or '' }}" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">State</label>
+        <input class="form-input" type="text" name="state" value="{{ edit_company.state or '' }}" maxlength="2" />
+      </div>
+      <div class="form-group form-group--full">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" name="notes">{{ edit_company.notes or '' }}</textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn--primary">Update Company</button>
+      <a href="{{ url_for('companies') }}" class="btn btn--ghost">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endif %}
+
+{% if companies %}
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Company</th><th>Industry</th><th>Location</th>
+        <th>Jobs</th><th>Contacts</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in companies %}
+      <tr>
+        <td>
+          {{ c.company_name }}
+          {% if c.website %}<br><a href="{{ c.website }}" target="_blank" style="font-size:0.75rem;color:var(--accent2);font-family:var(--font-mono)">↗ website</a>{% endif %}
+        </td>
+        <td>{{ c.industry or '—' }}</td>
+        <td class="mono" style="font-size:0.8rem">{{ [c.city, c.state]|select|join(', ') or '—' }}</td>
+        <td><span class="badge badge--applied">{{ c.job_count }}</span></td>
+        <td><span class="badge badge--interview">{{ c.contact_count }}</span></td>
+        <td>
+          <div class="td-actions">
+            <a href="{{ url_for('company_edit', id=c.company_id) }}" class="btn btn--ghost btn--sm">Edit</a>
+            <form method="POST" action="{{ url_for('company_delete', id=c.company_id) }}"
+                  onsubmit="return confirm('Delete {{ c.company_name }}?')">
+              <button type="submit" class="btn btn--danger btn--sm">Delete</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="table-wrap">
+  <div class="empty-state">
+    <div class="empty-state-icon">⬡</div>
+    No companies yet. Click <strong>+ Add Company</strong> to get started.
+  </div>
+</div>
+{% endif %}
+
+<script>
+function toggleForm(id) {
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+</script>
+{% endblock %}

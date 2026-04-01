@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Applications — Job Tracker{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Applications</h1>
+    <div class="page-subtitle">{{ applications|length }} total</div>
+  </div>
+  <button class="btn btn--primary" onclick="toggleForm('add-form')">+ Add Application</button>
+</div>
+
+<div id="add-form" class="form-wrap mb-2" style="display:none">
+  <div class="section-title">New Application</div>
+  <form method="POST" action="{{ url_for('application_new') }}">
+    <div class="form-grid">
+      <div class="form-group form-group--full">
+        <label class="form-label">Job</label>
+        <select class="form-select" name="job_id">
+          <option value="">— Select Job —</option>
+          {% for j in jobs %}
+          <option value="{{ j.job_id }}">{{ j.job_title }} @ {{ j.company_name or 'Unknown' }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Application Date *</label>
+        <input class="form-input" type="date" name="application_date" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-select" name="status">
+          {% for s in ['Applied','Screening','Interview','Offer','Rejected','Withdrawn'] %}
+          <option value="{{ s }}">{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Resume Version</label>
+        <input class="form-input" type="text" name="resume_version" placeholder="e.g. v2, 2024-tech" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cover Letter Sent</label>
+        <div class="form-checkbox-row">
+          <input type="checkbox" name="cover_letter_sent" id="cover_add" />
+          <label for="cover_add" style="font-size:0.88rem;color:var(--text-dim)">Yes</label>
+        </div>
+      </div>
+      <div class="form-group form-group--full">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" name="notes"></textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn--primary">Add Application</button>
+      <button type="button" class="btn btn--ghost" onclick="toggleForm('add-form')">Cancel</button>
+    </div>
+  </form>
+</div>
+
+{% if edit_application %}
+<div class="form-wrap mb-2">
+  <div class="section-title">Edit Application</div>
+  <form method="POST" action="{{ url_for('application_edit', id=edit_application.application_id) }}">
+    <div class="form-grid">
+      <div class="form-group form-group--full">
+        <label class="form-label">Job</label>
+        <select class="form-select" name="job_id">
+          <option value="">— Select Job —</option>
+          {% for j in jobs %}
+          <option value="{{ j.job_id }}" {{ 'selected' if edit_application.job_id == j.job_id }}>
+            {{ j.job_title }} @ {{ j.company_name or 'Unknown' }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Application Date *</label>
+        <input class="form-input" type="date" name="application_date" value="{{ edit_application.application_date }}" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-select" name="status">
+          {% for s in ['Applied','Screening','Interview','Offer','Rejected','Withdrawn'] %}
+          <option value="{{ s }}" {{ 'selected' if edit_application.status == s }}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Resume Version</label>
+        <input class="form-input" type="text" name="resume_version" value="{{ edit_application.resume_version or '' }}" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cover Letter Sent</label>
+        <div class="form-checkbox-row">
+          <input type="checkbox" name="cover_letter_sent" id="cover_edit" {{ 'checked' if edit_application.cover_letter_sent }} />
+          <label for="cover_edit" style="font-size:0.88rem;color:var(--text-dim)">Yes</label>
+        </div>
+      </div>
+      <div class="form-group form-group--full">
+        <label class="form-label">Interview Notes (JSON or plain text)</label>
+        <textarea class="form-textarea" name="interview_data">{% if edit_application.interview_data %}{{ edit_application.interview_data }}{% endif %}</textarea>
+      </div>
+      <div class="form-group form-group--full">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" name="notes">{{ edit_application.notes or '' }}</textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn--primary">Update Application</button>
+      <a href="{{ url_for('applications') }}" class="btn btn--ghost">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endif %}
+
+{% if applications %}
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Job / Company</th><th>Date Applied</th><th>Status</th>
+        <th>Resume</th><th>Cover Letter</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in applications %}
+      <tr>
+        <td>
+          {{ a.job_title or 'Unknown Role' }}<br>
+          <span class="text-muted mono" style="font-size:0.78rem">{{ a.company_name or '—' }}</span>
+        </td>
+        <td class="mono" style="font-size:0.82rem">{{ a.application_date }}</td>
+        <td><span class="badge badge--{{ a.status.lower() }}">{{ a.status }}</span></td>
+        <td class="mono" style="font-size:0.8rem">{{ a.resume_version or '—' }}</td>
+        <td>
+          {% if a.cover_letter_sent %}<span style="color:var(--accent)">✓</span>
+          {% else %}<span class="text-muted">—</span>{% endif %}
+        </td>
+        <td>
+          <div class="td-actions">
+            <a href="{{ url_for('application_edit', id=a.application_id) }}" class="btn btn--ghost btn--sm">Edit</a>
+            <form method="POST" action="{{ url_for('application_delete', id=a.application_id) }}"
+                  onsubmit="return confirm('Delete this application?')">
+              <button type="submit" class="btn btn--danger btn--sm">Delete</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="table-wrap">
+  <div class="empty-state">
+    <div class="empty-state-icon">◈</div>
+    No applications yet. Click <strong>+ Add Application</strong> to get started.
+  </div>
+</div>
+{% endif %}
+
+<script>
+function toggleForm(id) {
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+</script>
+{% endblock %}
