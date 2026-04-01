@@ -18,7 +18,7 @@ A full-stack web application for tracking job applications, built with Flask, My
 ## Setup
 
 ### 1. Install dependencies
-pip install -r requirements.txt
+pip install -r requirements.txt or pip install flask mysql-connector-python
 
 ### 2. Create the database
 mysql -u root -p < schema.sql
