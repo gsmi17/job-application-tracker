@@ -28,6 +28,10 @@ Edit `database.py` — update:
 python
 user = 'YOUR USER'
 password='YOUR_PASSWORD'
+I created a new user and password because it was giving me errors, I did this:
+"CREATE USER 'appuser'@'localhost' IDENTIFIED BY 'password123';
+GRANT ALL PRIVILEGES ON job_tracker.* TO 'appuser'@'localhost';
+FLUSH PRIVILEGES;"
 
 ### 4. Go to the job_tracker folder, run the app and visit: http://localhost:5000
 python app.py
